@@ -12,6 +12,7 @@ void app_main() {
     gpio_config(&io_conf);
 
     while(1) {
+        printf("Hello World!\n");
         gpio_set_level(LED_BUILTIN, 0);
         vTaskDelay(1000 / portTICK_RATE_MS);
         gpio_set_level(LED_BUILTIN, 1);
