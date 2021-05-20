@@ -1,6 +1,24 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/gpio.h"
+#include "string.h"
+#include "mjs.h"
+
+void foo(int x) {
+  printf("Hello %d!\n", x);
+}
+
+void *my_dlsym(void *handle, const char *name) {
+  if (strcmp(name, "foo") == 0) return foo;
+  return NULL;
+}
+
+struct mjs *mjs;
+
+void mjs_init() {
+    mjs = mjs_create();
+    mjs_set_ffi_resolver(mjs, my_dlsym);
+}
 
 void config_gpio(uint8_t pin, gpio_mode_t mode) {
     gpio_config_t io_conf;
@@ -43,12 +61,14 @@ void app_main() {
     config_gpio(LED_BUILTIN, GPIO_MODE_OUTPUT);
 
     hx711_init();
+    mjs_init();
 
     while(1) {
         printf("Hello World!\n");
         if(hx711_is_ready()) {
             printf("HX711 Reading: %d\n", hx711_read_value());
         }
+        mjs_exec(mjs, "let f = ffi('void foo(int)'); f(1234)", NULL);
         gpio_set_level(LED_BUILTIN, 0);
         vTaskDelay(1000 / portTICK_RATE_MS);
         gpio_set_level(LED_BUILTIN, 1);
